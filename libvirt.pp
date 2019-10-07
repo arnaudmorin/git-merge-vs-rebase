@@ -35,8 +35,8 @@
 #
 # [*libvirt_cpu_model_extra_flags*]
 #   (optional) This allows specifying granular CPU feature flags when
-#   specifying CPU models. Only valid, if cpu_mode and cpu_model
-#   attributes are specified and only if cpu_mode="custom".
+#   specifying CPU models. Only has effect if cpu_mode is not set
+#   to 'none'.
 #   Defaults to undef
 #
 # [*libvirt_snapshot_image_format*]
@@ -137,6 +137,20 @@
 #   https://libvirt.org/logging.html
 #   Defaults to undef
 #
+# [*rx_queue_size*]
+#   (optional) virtio-net rx queue size
+#   Valid values are 256, 512, 1024
+#   Defaults to $::os_service_default
+#
+# [*tx_queue_size*]
+#   (optional) virtio-net tx queue size
+#   Valid values are 256, 512, 1024
+#   Defaults to $::os_service_default
+#
+# [*file_backed_memory*]
+#   (optional) Available capacity in MiB for file-backed memory.
+#   Defaults to $::os_service_default
+#
 # [*volume_use_multipath*]
 #   (optional) Use multipath connection of the
 #   iSCSI or FC volume. Volumes can be connected in the
@@ -169,6 +183,9 @@ class nova::compute::libvirt (
   $preallocate_images                         = $::os_service_default,
   $manage_libvirt_services                    = true,
   $log_outputs                                = undef,
+  $rx_queue_size                              = $::os_service_default,
+  $tx_queue_size                              = $::os_service_default,
+  $file_backed_memory                         = undef,
   $volume_use_multipath                       = $::os_service_default,
 ) inherits nova::params {
 
@@ -206,6 +223,14 @@ class nova::compute::libvirt (
     }
   }
 
+  unless $rx_queue_size == $::os_service_default or $rx_queue_size in [256, 512, 1024] {
+    fail("Invalid rx_queue_size parameter: ${rx_queue_size}")
+  }
+
+  unless $tx_queue_size == $::os_service_default or $tx_queue_size in [256, 512, 1024] {
+    fail("Invalid_tx_queue_size parameter: ${tx_queue_size}")
+  }
+
   # manage_libvirt_services is here for backward compatibility to support
   # deployments that do not include nova::compute::libvirt::services
   #
@@ -241,13 +266,16 @@ class nova::compute::libvirt (
     'libvirt/hw_disk_discard':       value => $libvirt_hw_disk_discard;
     'libvirt/hw_machine_type':       value => $libvirt_hw_machine_type;
     'libvirt/enabled_perf_events':   value => join(any2array($libvirt_enabled_perf_events), ',');
+    'libvirt/rx_queue_size':         value => $rx_queue_size;
+    'libvirt/tx_queue_size':         value => $tx_queue_size;
+    'libvirt/file_backed_memory':    value => $file_backed_memory;
     'libvirt/volume_use_multipath':  value => $volume_use_multipath;
   }
 
   # cpu_model param is only valid if cpu_mode=custom
   # otherwise it should be commented out
   if $libvirt_cpu_mode_real == 'custom' {
-    validate_string($libvirt_cpu_model)
+    validate_legacy(String, 'validate_string', $libvirt_cpu_model)
     nova_config {
       'libvirt/cpu_model': value => $libvirt_cpu_model;
       'libvirt/cpu_model_extra_flags': value => $libvirt_cpu_model_extra_flags;
@@ -263,6 +291,20 @@ class nova::compute::libvirt (
 
     if $libvirt_cpu_model_extra_flags {
       warning('$libvirt_cpu_model_extra_flags requires that $libvirt_cpu_mode => "custom" and will be ignored')
+    }
+  }
+
+  if $libvirt_cpu_mode_real != 'none' {
+    validate_legacy(String, 'validate_string', $libvirt_cpu_model_extra_flags)
+    nova_config {
+      'libvirt/cpu_model_extra_flags': value => $libvirt_cpu_model_extra_flags;
+    }
+  } else {
+    nova_config {
+      'libvirt/cpu_model_extra_flags': ensure => absent;
+    }
+    if $libvirt_cpu_model_extra_flags {
+      warning('$libvirt_cpu_model_extra_flags requires that $libvirt_cpu_mode is not set to "none" and will be ignored')
     }
   }
 
