@@ -111,3 +111,15 @@ No diff to stein :p
 
 And a clean history!
 
+
+# Explanation
+
+Read this: https://git-scm.com/docs/merge-strategies
+
+Part of it:
+
+```
+With the strategies that use 3-way merge (including the default, 'recursive'), if a change is made on both branches, but later reverted on one of the branches, that change will be present in the merged result; some people find this behavior confusing. It occurs because only the heads and the merge base are considered when performing a merge, not the individual commits. The merge algorithm therefore considers the reverted change as no change at all, and substitutes the changed version instead.
+```
+
+
