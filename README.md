@@ -106,7 +106,7 @@ We can solve the conflict easily.
 Either way, the result will be the same:
 
 ```bash
-$ git diff stein
+git diff origin/stein
 # empty
 ```
 
