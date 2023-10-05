@@ -31,12 +31,12 @@ F has also been cherry-picked but with conflicts (solved, of course).
 First, create a branch from queens
 
 ```bash
-$ git checkout -b merged queens
+git checkout -b merged origin/queens
 ```
 
 Then merge the stein branch into your branch
 ```bash
-$ git merge stein
+git merge origin/stein
 ```
 
 You will have a conflict to solved.
@@ -48,7 +48,10 @@ You can solve the conflict easily.
 You should finally obtain something with a diff to stein:
 
 ```bash
-$ git diff stein
+git diff stein
+```
+
+```bash
 diff --git a/libvirt.pp b/libvirt.pp
 index c37b5ea..bd5eabe 100644
 --- a/libvirt.pp
@@ -82,13 +85,13 @@ index c37b5ea..bd5eabe 100644
 First, create a branch from queens
 
 ```bash
-$ git checkout -b rebased queens
+git checkout -b rebased origin/queens
 ```
 
 Now rebase it on top of stein:
 
 ```bash
-$ git rebase -i stein
+git rebase -i origin/stein
 ```
 
 Now, we have two choices:
